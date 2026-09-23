@@ -1,0 +1,22 @@
+# 大数据
+data/
+datasets/
+*.mp4
+*.avi
+*.mov
+*.zip
+*.tar.gz
+*.7z
+
+# 模型权重
+models/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# 输出
+outputs/
+runs/
+
+data/raw/
