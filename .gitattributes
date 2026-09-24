@@ -1,0 +1,34 @@
+# 统一换行：仓库内一律以 LF 存储与检出，避免 Windows/Linux 协作时整个文件被判定为改动
+* text=auto eol=lf
+
+# PowerShell 脚本例外：内容含中文标签，必须带 UTF-8 BOM 才能被 Windows PowerShell 5.1
+# 正确解码（否则会被当成 ANSI/GBK，既乱码又会导致解析失败），行尾用 CRLF。
+*.ps1 text eol=crlf
+*.sh  text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 明确按二进制处理（不做换行转换、不参与文本 diff）
+*.pkl    binary
+*.npz    binary
+*.npy    binary
+*.safetensors binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.docx   binary
+*.xlsx   binary
+*.pdf    binary
+
+# 让 git 正确识别为文本并按语言统计
+*.py     text diff=python
+*.yaml   text
+*.yml    text
+*.md     text
+*.json   text
+*.csv    text
+
+# 中文文档的语言标记（便于代码托管平台差异高亮）
+*.md linguist-documentation
+docs/* linguist-documentation

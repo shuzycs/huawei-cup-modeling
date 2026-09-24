@@ -1,0 +1,20 @@
+# 问题 2 直接依赖（版本区间，来自实验手册与实际执行环境）
+#
+# PyTorch 必须单独安装（不能写进本文件，因为它需要专用 index-url）：
+#   pip install --index-url https://download.pytorch.org/whl/cu118 torch==2.4.0
+#   # CPU-only 环境：pip install --index-url https://download.pytorch.org/whl/cpu torch==2.4.0
+#
+# 注意 numpy 必须 < 2：torch 2.4.0 由 NumPy 1.x 编译，装 numpy>=2 会在导入时
+# 报 "Failed to initialize NumPy: _ARRAY_API not found" 与 "Numpy is not available"。
+
+numpy>=1.26,<2
+pandas>=2.2,<3
+openpyxl>=3.1,<4
+scikit-learn>=1.4,<2
+transformers>=4.40,<5
+huggingface_hub>=0.26,<2
+safetensors>=0.4,<1
+matplotlib>=3.8,<4
+PyYAML>=6,<7
+tqdm>=4.66,<5
+pytest>=8,<10

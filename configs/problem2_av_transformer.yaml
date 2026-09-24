@@ -1,0 +1,88 @@
+# 问题 2 实验配置：局部模态缺失下的情感预测
+# 所有路径均相对仓库根目录。模型 revision 必须为已核实的完整 commit SHA。
+# 注意：本机（Windows）数据目录实际为 data/extracted/附件{1..4}...，不含 "E题数据" 中间层；
+# 手册示例中的路径若在服务器上存在，只需改回即可，代码不做任何硬编码假设。
+
+data:
+  # 附件 2 对齐版：训练/验证/内部测试
+  aligned_pkl: data/extracted/附件2-数据集特征文件/aligned_50.pkl
+  labels_xlsx: data/extracted/附件2-数据集特征文件/label.xlsx
+  # 附件 3 对齐版：30 个无标签专项测试文件（只用于最终推理）
+  challenge_dir: data/extracted/附件3-模态缺失特征样本/对齐版本
+  cache_dir: outputs/problem2/cache
+
+text_model:
+  repo_id: google/bert_uncased_L-2_H-128_A-2
+  revision: 30b0a37ccaaa32f332884b96992754e246e48c5f
+  frozen: true
+  local_dir: outputs/problem2/pretrained/bert_uncased_L-2_H-128_A-2
+  # 手册要求的"解冻后两层"独立实验：只对 E5 生效，E0~E4 保持 frozen: true
+  unfrozen_experiment: E5
+  unfreeze_top_layers: 2
+  unfrozen_learning_rate: 0.0001
+  # 余弦退火的下界比例（0.05 表示最低降到 5% 基础学习率）
+  min_lr_ratio: 0.05
+
+model:
+  hidden_dim: 128
+  dropout: 0.2
+  # Historical gate model remains the default after the matched evaluation.
+  fusion_type: gate
+  temporal_encoder: transformer
+  audio_vision_dim: 256
+  audio_vision_layers: 2
+  audio_vision_heads: 4
+
+training:
+  seeds: [42, 52, 62]
+  batch_size: 32
+  max_epochs: 40
+  patience: 8
+  learning_rate: 0.001
+  weight_decay: 0.01
+  regression_weight: 0.5
+  grad_clip: 1.0
+  # 类别不均衡：true 时按训练集逆频率加权 CE（作为独立 variant 记录，默认关闭；
+  # E5 经验证集小范围搜索后开启，见 README 与复现报告的"超参数搜索记录"）
+  class_weighted_loss: false
+  clean_probability: 0.25
+  mask_rates: [0.10, 0.30, 0.50, 0.70]
+  # 掩码生成器：每个被选模态的缺失区间长度比例从 mask_rates 均匀采样
+  # 选择几个模态做缺失：1 个模态 70%，2 个模态 30%
+  single_modality_probability: 0.70
+  num_workers: 0
+  device: cuda
+  amp: true
+
+validation:
+  # 验证缺失图谱：模态 T/A/V × 位置 起/中/末 × 比例 10/30/50/70%，每种至少 3 个固定随机视图
+  views_per_condition: 3
+  dual_modality_pairs: [["T", "A"], ["T", "V"], ["A", "V"]]
+  dual_views_per_condition: 3
+
+# E4：完整输入教师 -> 连续缺失视图学生的蒸馏（手册 3.3，可选项）
+# 蒸馏权重从手册建议的中性起点开始，只在 valid 上小范围搜索并记录
+distillation:
+  # 教师输入使用附件 2 的预计算 text (N,50,768)；只用于训练阶段，最终推理只跑学生
+  teacher_text_dim: 768
+  teacher_hidden_dim: 128
+  teacher_dropout: 0.2
+  teacher_learning_rate: 0.001
+  teacher_max_epochs: 40
+  teacher_patience: 8
+  temperature: 4.0
+  # 经验证集小范围搜索（见复现报告 §3.3/§9）：KL 项在冻结文本编码器的学生上无收益，
+  # 取 kl_weight=0.0（只保留强度一致性）是 5 个变体中最好的；原值 1.0 会显著变差。
+  kl_weight: 0.0
+  intensity_consistency_weight: 0.5
+  # 是否按 KL(p_T‖U) 归一化软目标项的尺度。默认 false（与最终 E4 配置一致）：
+  # 该归一化在教师分布接近均匀时分母趋近 0 会放大损失，属于已知病态，
+  # 保留开关以便在确认教师足够自信时再启用。
+  normalize_kl: false
+
+evaluation:
+  regression_weight_grid: [0.25, 0.5, 1.0]
+  bootstrap_samples: 2000
+  bootstrap_seed: 20240924
+
+output_dir: outputs/problem2_av_transformer

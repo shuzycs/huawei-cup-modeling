@@ -1,4 +1,9 @@
-# 大数据
+# ---------------------------------------------------------------------------
+# 问题 2 工作仓库 .gitignore
+# 原则：源码/配置/文档入库；原始数据、环境、缓存、大产物一律不入库。
+# ---------------------------------------------------------------------------
+
+# ---- 赛题原始数据（体积大且有版权约束）----
 data/
 datasets/
 *.mp4
@@ -8,15 +13,48 @@ datasets/
 *.tar.gz
 *.7z
 
-# 模型权重
+# ---- 实验产物与缓存（可由脚本重跑复现）----
+# 产物全部忽略，只保留目录说明文件 outputs/README.md（git 的否定规则要求
+# 不能忽略父目录本身，否则子文件的例外无法生效，所以用 outputs/* 而不是 outputs/）
+outputs/*
+!outputs/README.md
+runs/
+
+# ---- 模型权重 ----
+# 通用预训练编码器与训练中间态不入库；
+# 自训练层（runs/*/best.safetensors）体积 < 3 MB，随提交包单独提供，不入库。
 models/
 *.pt
 *.pth
 *.ckpt
-*.safetensors
+*.bin
+*.onnx
+last.safetensors
 
-# 输出
-outputs/
-runs/
+# ---- 临时目录 ----
+_probe/
+_wheels/
+.venv/
+venv/
+env/
 
-data/raw/
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# ---- 编辑器 / 系统 ----
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
